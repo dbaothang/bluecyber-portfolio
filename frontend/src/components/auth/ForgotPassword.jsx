@@ -59,7 +59,7 @@ const ForgotPassword = () => {
             id="email"
             name="email"
             type="email"
-            className="input-field"
+            className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 input-field"
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             value={formik.values.email}
@@ -71,7 +71,13 @@ const ForgotPassword = () => {
           ) : null}
         </div>
 
-        <button type="submit" className="w-full btn-primary" disabled={loading}>
+        <button
+          type="submit"
+          disabled={loading}
+          className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${
+            loading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+        >
           {loading ? "Sending..." : "Reset Password"}
         </button>
       </form>

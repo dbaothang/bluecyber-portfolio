@@ -4,9 +4,12 @@ import * as Yup from "yup";
 import axios from "axios";
 
 const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
+  const [currentImage, setCurrentImage] = useState(""); // Ảnh hiện tại của project
   const [editingProject, setEditingProject] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
   const [uploading, setUploading] = useState(false);
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
 
   const formik = useFormik({
     initialValues: {
@@ -26,24 +29,44 @@ const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
     }),
     onSubmit: async (values, { resetForm }) => {
       try {
-        let imageUrl = editingProject?.image || "";
+        let imageUrl = currentImage; // Sử dụng ảnh hiện tại làm mặc định
 
         if (values.image) {
           setUploading(true);
           const formData = new FormData();
           formData.append("image", values.image);
+          formData.append("name", values.name);
+          formData.append("description", values.description);
+          formData.append("repositoryUrl", values.repositoryUrl);
+          formData.append("demoUrl", values.demoUrl || "");
 
-          const { data } = await axios.post("/api/upload", formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          });
-          imageUrl = data.secure_url;
+          const { data } = editingProject
+            ? await axios.put(
+                `/api/user/projects/${editingProject._id}`,
+                formData,
+                {
+                  headers: {
+                    "Content-Type": "multipart/form-data",
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              )
+            : await axios.post("/api/user/projects", formData, {
+                headers: {
+                  "Content-Type": "multipart/form-data",
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+
+          imageUrl = data.image; // Lấy URL ảnh từ response
           setUploading(false);
         }
 
         const projectData = {
-          ...values,
+          name: values.name,
+          description: values.description,
+          repositoryUrl: values.repositoryUrl,
+          demoUrl: values.demoUrl,
           image: imageUrl,
         };
 
@@ -56,6 +79,7 @@ const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
         resetForm();
         setEditingProject(null);
         setImagePreview("");
+        setCurrentImage("");
       } catch (error) {
         console.error("Error saving project:", error);
         setUploading(false);
@@ -73,6 +97,8 @@ const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
 
   const handleEditProject = (project) => {
     setEditingProject(project);
+    setCurrentImage(project.image || ""); // Lưu ảnh hiện tại
+    setImagePreview(""); // Reset preview ảnh mới
     formik.setValues({
       name: project.name,
       description: project.description,
@@ -80,7 +106,6 @@ const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
       demoUrl: project.demoUrl || "",
       image: null,
     });
-    setImagePreview(project.image || "");
   };
 
   return (
@@ -97,13 +122,34 @@ const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
             Project Image
           </label>
           <div className="flex items-center gap-4">
-            {imagePreview ? (
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-20 h-20 rounded-lg object-cover"
-              />
-            ) : (
+            {(imagePreview || currentImage) && (
+              <div className="relative">
+                <img
+                  src={imagePreview || currentImage}
+                  alt={imagePreview ? "New preview" : "Current project"}
+                  className="w-20 h-20 rounded-lg object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (imagePreview) {
+                      setImagePreview("");
+                      formik.setFieldValue("image", null);
+                    } else {
+                      setCurrentImage("");
+                      // Nếu đang edit, cần xóa cả ảnh hiện tại
+                      if (editingProject) {
+                        formik.setFieldValue("image", null); // Đánh dấu để xóa ảnh
+                      }
+                    }
+                  }}
+                  className="absolute top-0 right-0 bg-white rounded-full w-5 h-5 flex items-center justify-center text-red-500 font-bold shadow transform translate-x-1/2 -translate-y-1/2 hover:bg-red-50"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+            {!(imagePreview || currentImage) && (
               <div className="w-20 h-20 rounded-lg bg-gray-200 flex items-center justify-center">
                 <span className="text-gray-500">No image</span>
               </div>
@@ -121,7 +167,7 @@ const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
                 htmlFor="projectImage"
                 className="inline-block px-4 py-2 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200"
               >
-                {imagePreview ? "Change Image" : "Upload Image"}
+                {imagePreview || currentImage ? "Change Image" : "Upload Image"}
               </label>
               <p className="text-xs text-gray-500 mt-1">
                 Image must be PNG or JPEG - max 2MB
@@ -141,7 +187,7 @@ const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
             id="name"
             name="name"
             type="text"
-            className="input-field"
+            className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 input-field"
             placeholder="Enter your project name"
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
@@ -165,7 +211,7 @@ const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
             id="repositoryUrl"
             name="repositoryUrl"
             type="url"
-            className="input-field"
+            className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 input-field"
             placeholder="Enter the repository URL"
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
@@ -189,7 +235,7 @@ const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
             id="description"
             name="description"
             rows="3"
-            className="input-field"
+            className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 input-field"
             placeholder="Enter a short description.."
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
@@ -213,7 +259,7 @@ const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
             id="demoUrl"
             name="demoUrl"
             type="url"
-            className="input-field"
+            className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 input-field"
             placeholder="Enter the demo URL"
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
@@ -229,7 +275,7 @@ const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
         <div className="flex gap-4">
           <button
             type="submit"
-            className="btn-primary"
+            className="w-full px-4 py-2 text-white bg-purple-600 rounded-md hover:bg-purple-700 active:scale-95 btn-primary"
             disabled={uploading || formik.isSubmitting}
           >
             {uploading || formik.isSubmitting
@@ -248,6 +294,7 @@ const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
                 setEditingProject(null);
                 formik.resetForm();
                 setImagePreview("");
+                setCurrentImage("");
               }}
               className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
             >

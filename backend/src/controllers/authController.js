@@ -57,12 +57,12 @@ const loginUser = asyncHandler(async (req, res) => {
 
   if (user && (await user.correctPassword(password, user.password))) {
     res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      jobTitle: user.jobTitle,
-      bio: user.bio,
-      profileImage: user.profileImage,
+      // _id: user._id,
+      // name: user.name,
+      // email: user.email,
+      // jobTitle: user.jobTitle,
+      // bio: user.bio,
+      // profileImage: user.profileImage,
       token: generateToken(user._id),
     });
   } else {
@@ -76,6 +76,7 @@ const loginUser = asyncHandler(async (req, res) => {
 // @access  Public
 const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
+  console.log(email);
 
   const user = await User.findOne({ email });
   if (!user) {
@@ -104,6 +105,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 // @route   POST /api/user/reset-password
 // @access  Public
 const resetPassword = asyncHandler(async (req, res) => {
+  console.log(req.body);
   const { token, password } = req.body;
 
   // Verify token

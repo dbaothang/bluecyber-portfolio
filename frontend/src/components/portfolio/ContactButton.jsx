@@ -12,6 +12,11 @@ const ContactButton = ({ userId }) => {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
 
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const headers = { Authorization: `Bearer ${token}` };
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -25,10 +30,14 @@ const ContactButton = ({ userId }) => {
     setError(null);
 
     try {
-      await axios.post("/api/contact", {
-        ...formData,
-        userId,
-      });
+      await axios.post(
+        "/api/contact",
+        {
+          ...formData,
+          userId,
+        },
+        { headers }
+      );
       setSuccess(true);
       setFormData({ email: "", message: "" });
     } catch (err) {

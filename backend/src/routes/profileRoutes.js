@@ -9,4 +9,6 @@ router
   .get(protect, profileController.getUserProfile)
   .put(protect, upload.single("image"), profileController.updateUserProfile);
 
+router.route("/profile/:id").get(protect, profileController.getUserProfile);
+
 module.exports = router;

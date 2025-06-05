@@ -54,8 +54,8 @@ const updateProject = asyncHandler(async (req, res) => {
   project.demoUrl = req.body.demoUrl || project.demoUrl;
 
   if (req.file) {
-    const result = await uploadToCloudinary(req.file.path, "project-images");
-    project.image = result.secure_url;
+    // const result = await uploadToCloudinary(req.file.path, "project-images");
+    project.image = req.file.path;
   }
 
   const updatedProject = await project.save();

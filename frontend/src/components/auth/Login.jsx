@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FiGithub } from "react-icons/fi";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -8,7 +8,11 @@ import authStore from "../../store/authStore";
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, loading, error } = authStore();
+
+  // Lấy trang trước đó từ state hoặc mặc định là '/portfolio'
+  const from = location.state?.from?.pathname || "/portfolio";
 
   const formik = useFormik({
     initialValues: {
@@ -20,8 +24,10 @@ const Login = () => {
       password: Yup.string().required("Required"),
     }),
     onSubmit: async (values) => {
-      await login(values.email, values.password);
-      navigate("/portfolio");
+      const success = await login(values.email, values.password);
+      if (success) {
+        navigate(from, { replace: true }); // Redirect về trang trước đó
+      }
     },
   });
 
@@ -46,6 +52,7 @@ const Login = () => {
       {error && <div className="text-red-500 mb-4 text-center">{error}</div>}
 
       <form onSubmit={formik.handleSubmit}>
+        {/* Giữ nguyên phần form fields */}
         <div className="mb-4">
           <label
             htmlFor="email"
@@ -57,7 +64,7 @@ const Login = () => {
             id="email"
             name="email"
             type="email"
-            className="input-field"
+            className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 input-field"
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             value={formik.values.email}
@@ -81,7 +88,7 @@ const Login = () => {
               id="password"
               name="password"
               type={showPassword ? "text" : "password"}
-              className="input-field"
+              className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 input-field"
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               value={formik.values.password}
@@ -110,7 +117,13 @@ const Login = () => {
           </Link>
         </div>
 
-        <button type="submit" className="w-full btn-primary" disabled={loading}>
+        <button
+          type="submit"
+          disabled={loading}
+          className={`w-full px-4 py-2 text-white bg-purple-600 rounded-md hover:bg-purple-700 active:scale-95 transition ${
+            loading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+        >
           {loading ? "Signing in..." : "Sign in"}
         </button>
       </form>

@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 import axios from "axios";
 import UserProfile from "../components/portfolio/UserProfile";
 import ProjectCard from "../components/portfolio/ProjectCard";
 import ContactButton from "../components/portfolio/ContactButton";
 
 const PortfolioPage = () => {
-  const { userId } = useParams();
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,10 +12,14 @@ const PortfolioPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const userResponse = await axios.get(`/api/user/profile/${userId}`);
-        const projectsResponse = await axios.get(
-          `/api/user/projects/${userId}`
-        );
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("No token found");
+
+        const headers = { Authorization: `Bearer ${token}` };
+        const userResponse = await axios.get("/api/user/profile", { headers });
+        const projectsResponse = await axios.get("/api/user/projects", {
+          headers,
+        });
 
         setUser(userResponse.data);
         setProjects(projectsResponse.data);
@@ -29,7 +31,7 @@ const PortfolioPage = () => {
     };
 
     fetchData();
-  }, [userId]);
+  }, []); // ⬅️ Bỏ userId ra khỏi dependency luôn
 
   if (loading) {
     return <div className="text-center py-12">Loading...</div>;
@@ -58,7 +60,8 @@ const PortfolioPage = () => {
       </div>
 
       <div className="flex justify-center">
-        <ContactButton userId={userId} />
+        <ContactButton userId={user._id} />{" "}
+        {/* vẫn có thể dùng nếu cần user._id */}
       </div>
 
       <div className="mt-12 text-center text-gray-500 text-sm">

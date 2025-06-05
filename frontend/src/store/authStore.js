@@ -4,20 +4,26 @@ import axios from "axios";
 const authStore = create((set) => ({
   user: null,
   isAuthenticated: false,
-  loading: false,
+  loading: true,
   error: null,
 
   login: async (email, password) => {
     set({ loading: true, error: null });
     try {
       const { data } = await axios.post("/api/user/login", { email, password });
-      localStorage.setItem("userInfo", JSON.stringify(data));
-      set({ user: data, isAuthenticated: true, loading: false });
+      localStorage.setItem("token", data.token);
+      set({
+        user: data.user,
+        isAuthenticated: true,
+        loading: false,
+      });
+      return true;
     } catch (error) {
       set({
         error: error.response?.data?.message || error.message,
         loading: false,
       });
+      return false;
     }
   },
 
@@ -29,8 +35,8 @@ const authStore = create((set) => ({
         email,
         password,
       });
-      localStorage.setItem("userInfo", JSON.stringify(data));
-      set({ user: data, isAuthenticated: true, loading: false });
+      // localStorage.setItem("userInfo", JSON.stringify(data));
+      set({ loading: false });
     } catch (error) {
       set({
         error: error.response?.data?.message || error.message,
@@ -40,7 +46,7 @@ const authStore = create((set) => ({
   },
 
   logout: () => {
-    localStorage.removeItem("userInfo");
+    localStorage.removeItem("token");
     set({ user: null, isAuthenticated: false });
   },
 
@@ -60,6 +66,7 @@ const authStore = create((set) => ({
   resetPassword: async (token, password) => {
     set({ loading: true, error: null });
     try {
+      console.log(token, password);
       await axios.post("/api/user/reset-password", { token, password });
       set({ loading: false });
     } catch (error) {
@@ -70,10 +77,30 @@ const authStore = create((set) => ({
     }
   },
 
-  loadUser: () => {
-    const userInfo = localStorage.getItem("userInfo");
-    if (userInfo) {
-      set({ user: JSON.parse(userInfo), isAuthenticated: true });
+  loadUser: async () => {
+    set({ loading: true });
+    const token = localStorage.getItem("token");
+    if (!token) {
+      set({ loading: false });
+      return;
+    }
+
+    try {
+      const { data } = await axios.get("/api/user/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      set({
+        user: data,
+        isAuthenticated: true,
+        loading: false,
+      });
+    } catch (error) {
+      localStorage.removeItem("token");
+      set({
+        user: null,
+        isAuthenticated: false,
+        loading: false,
+      });
     }
   },
 }));

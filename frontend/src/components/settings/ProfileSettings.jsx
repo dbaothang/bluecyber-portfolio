@@ -6,6 +6,9 @@ import axios from "axios";
 const ProfileSettings = ({ user, onUpdate }) => {
   const [imagePreview, setImagePreview] = useState(user?.profileImage || "");
   const [uploading, setUploading] = useState(false);
+  const [currentImage, setCurrentImage] = useState(user?.profileImage || ""); // Thêm state để lưu ảnh hiện tại
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
 
   const formik = useFormik({
     initialValues: {
@@ -21,28 +24,30 @@ const ProfileSettings = ({ user, onUpdate }) => {
     }),
     onSubmit: async (values) => {
       try {
-        let imageUrl = user?.profileImage || "";
+        setUploading(true);
+        const formData = new FormData();
+
+        formData.append("name", values.name);
+        formData.append("jobTitle", values.jobTitle);
+        formData.append("bio", values.bio);
 
         if (values.image) {
-          setUploading(true);
-          const formData = new FormData();
           formData.append("image", values.image);
-
-          const { data } = await axios.post("/api/upload", formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          });
-          imageUrl = data.secure_url;
-          setUploading(false);
+        } else if (values.image === null && currentImage) {
+          // Nếu người dùng đã xóa ảnh
+          formData.append("removeImage", "true");
         }
 
-        const updatedUser = {
-          ...values,
-          profileImage: imageUrl,
-        };
+        const { data } = await axios.put("/api/user/profile", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-        await onUpdate(updatedUser);
+        await onUpdate(data);
+        setCurrentImage(data.profileImage || ""); // Cập nhật ảnh hiện tại
+        setUploading(false);
       } catch (error) {
         console.error("Error updating profile:", error);
         setUploading(false);
@@ -58,6 +63,31 @@ const ProfileSettings = ({ user, onUpdate }) => {
     }
   };
 
+  const handleRemoveImage = () => {
+    formik.setFieldValue("image", null); // Đánh dấu xóa ảnh
+    setImagePreview(""); // Xóa preview
+    if (currentImage) {
+      // Nếu có ảnh hiện tại, chỉ xóa preview nhưng vẫn giữ currentImage
+      // Khi submit sẽ xử lý việc xóa ảnh thật sự
+    }
+  };
+
+  // Reset form khi user thay đổi
+  useEffect(() => {
+    if (user) {
+      formik.resetForm({
+        values: {
+          name: user.name || "",
+          jobTitle: user.jobTitle || "",
+          bio: user.bio || "",
+          image: null,
+        },
+      });
+      setCurrentImage(user.profileImage || "");
+      setImagePreview("");
+    }
+  }, [user]);
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-xl font-semibold mb-6">Profile Settings</h2>
@@ -68,13 +98,23 @@ const ProfileSettings = ({ user, onUpdate }) => {
             Profile Image
           </label>
           <div className="flex items-center gap-4">
-            {imagePreview ? (
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-20 h-20 rounded-full object-cover"
-              />
-            ) : (
+            {(imagePreview || currentImage) && (
+              <div className="relative">
+                <img
+                  src={imagePreview || currentImage}
+                  alt="Profile"
+                  className="w-20 h-20 rounded-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className="absolute top-0 right-0 bg-white rounded-full w-5 h-5 flex items-center justify-center text-red-500 font-bold shadow transform translate-x-1/2 -translate-y-1/2 hover:bg-red-50"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+            {!(imagePreview || currentImage) && (
               <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
                 <span className="text-gray-500">No image</span>
               </div>
@@ -92,7 +132,7 @@ const ProfileSettings = ({ user, onUpdate }) => {
                 htmlFor="image"
                 className="inline-block px-4 py-2 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200"
               >
-                {imagePreview ? "Change Image" : "Upload Image"}
+                {imagePreview || currentImage ? "Change Image" : "Upload Image"}
               </label>
               <p className="text-xs text-gray-500 mt-1">
                 Image must be PNG or JPEG - max 2MB
@@ -101,6 +141,7 @@ const ProfileSettings = ({ user, onUpdate }) => {
           </div>
         </div>
 
+        {/* Các phần khác giữ nguyên */}
         <div className="mb-4">
           <label
             htmlFor="name"
@@ -112,7 +153,7 @@ const ProfileSettings = ({ user, onUpdate }) => {
             id="name"
             name="name"
             type="text"
-            className="input-field"
+            className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 input-field"
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             value={formik.values.name}
@@ -135,7 +176,7 @@ const ProfileSettings = ({ user, onUpdate }) => {
             id="jobTitle"
             name="jobTitle"
             type="text"
-            className="input-field"
+            className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 input-field"
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             value={formik.values.jobTitle}
@@ -158,7 +199,7 @@ const ProfileSettings = ({ user, onUpdate }) => {
             id="bio"
             name="bio"
             rows="4"
-            className="input-field"
+            className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 input-field"
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             value={formik.values.bio}
@@ -170,7 +211,7 @@ const ProfileSettings = ({ user, onUpdate }) => {
 
         <button
           type="submit"
-          className="btn-primary"
+          className="w-full px-4 py-2 text-white bg-purple-600 rounded-md hover:bg-purple-700 active:scale-95 btn-primary"
           disabled={uploading || formik.isSubmitting}
         >
           {uploading || formik.isSubmitting ? "Saving..." : "Save Changes"}

@@ -45,13 +45,13 @@ const ResetPassword = () => {
             htmlFor="password"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            New Password
+            New Password <span className="text-red-500">*</span>
           </label>
           <input
             id="password"
             name="password"
             type="password"
-            className="input-field"
+            className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 input-field"
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             value={formik.values.password}
@@ -68,13 +68,13 @@ const ResetPassword = () => {
             htmlFor="confirmPassword"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Confirm Password
+            Confirm Password <span className="text-red-500">*</span>
           </label>
           <input
             id="confirmPassword"
             name="confirmPassword"
             type="password"
-            className="input-field"
+            className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 input-field"
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             value={formik.values.confirmPassword}
@@ -86,7 +86,13 @@ const ResetPassword = () => {
           ) : null}
         </div>
 
-        <button type="submit" className="w-full btn-primary" disabled={loading}>
+        <button
+          type="submit"
+          disabled={loading}
+          className={`w-full px-4 py-2 text-white bg-purple-600 rounded-md hover:bg-purple-700 active:scale-95 transition ${
+            loading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+        >
           {loading ? "Resetting..." : "Reset Password"}
         </button>
       </form>

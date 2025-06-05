@@ -7,12 +7,19 @@ const SettingsPage = () => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const headers = { Authorization: `Bearer ${token}` };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const userResponse = await axios.get("/api/user/profile");
-        const projectsResponse = await axios.get("/api/user/projects");
+        console.log(headers);
+        const userResponse = await axios.get("/api/user/profile", { headers });
+        const projectsResponse = await axios.get("/api/user/projects", {
+          headers,
+        });
 
         setUser(userResponse.data);
         setProjects(projectsResponse.data);
@@ -26,18 +33,31 @@ const SettingsPage = () => {
     fetchData();
   }, []);
 
-  const handleUpdateProfile = async (updatedData) => {
+  const handleUpdateProfile = async (formData) => {
     try {
-      const { data } = await axios.put("/api/user/profile", updatedData);
+      // Không cần gọi lại API ở đây vì đã gọi trong ProfileSettings
+      // Chỉ cần cập nhật state với dữ liệu trả về từ API
+      const { data } = await axios.put("/api/user/profile", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setUser(data);
     } catch (error) {
       console.error("Error updating profile:", error);
+      throw error; // Ném lỗi để xử lý ở component con
     }
   };
 
   const handleAddProject = async (projectData) => {
     try {
-      const { data } = await axios.post("/api/user/projects", projectData);
+      const { data } = await axios.post("/api/user/projects", projectData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setProjects([...projects, data]);
     } catch (error) {
       console.error("Error adding project:", error);
@@ -48,7 +68,13 @@ const SettingsPage = () => {
     try {
       const { data } = await axios.put(
         `/api/user/projects/${projectId}`,
-        projectData
+        projectData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       setProjects(
         projects.map((proj) => (proj._id === projectId ? data : proj))
