@@ -36,6 +36,8 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   // Update image if provided
   if (req.file) {
     user.profileImage = req.file.path; // Use Cloudinary URL directly
+  } else {
+    user.profileImage = ""; // Keep the existing image
   }
 
   const updatedUser = await user.save();

@@ -66,6 +66,7 @@ const ProfileSettings = ({ user, onUpdate }) => {
   const handleRemoveImage = () => {
     formik.setFieldValue("image", null); // Đánh dấu xóa ảnh
     setImagePreview(""); // Xóa preview
+    setCurrentImage("");
     if (currentImage) {
       // Nếu có ảnh hiện tại, chỉ xóa preview nhưng vẫn giữ currentImage
       // Khi submit sẽ xử lý việc xóa ảnh thật sự
@@ -114,6 +115,7 @@ const ProfileSettings = ({ user, onUpdate }) => {
                 </button>
               </div>
             )}
+
             {!(imagePreview || currentImage) && (
               <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
                 <span className="text-gray-500">No image</span>
