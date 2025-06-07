@@ -2,14 +2,27 @@ import { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
-  const [currentImage, setCurrentImage] = useState(""); // Ảnh hiện tại của project
+const ProjectSettings = ({ onAddProject, onUpdateProject }) => {
+  const queryClient = useQueryClient();
+  const [currentImage, setCurrentImage] = useState("");
   const [editingProject, setEditingProject] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
   const [uploading, setUploading] = useState(false);
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No token found");
+
+  // ✅ React Query v5: dùng object
+  const { data: projects = [], isLoading } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const { data } = await axios.get("/api/user/projects", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return data;
+    },
+  });
 
   const formik = useFormik({
     initialValues: {
@@ -19,6 +32,7 @@ const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
       demoUrl: editingProject?.demoUrl || "",
       image: null,
     },
+    enableReinitialize: true, // ✅ để cập nhật lại initialValues khi editingProject thay đổi
     validationSchema: Yup.object({
       name: Yup.string().required("Required"),
       description: Yup.string().required("Required"),
@@ -29,59 +43,52 @@ const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
     }),
     onSubmit: async (values, { resetForm }) => {
       try {
-        let imageUrl = currentImage; // Sử dụng ảnh hiện tại làm mặc định
-
+        setUploading(true);
+        const formData = new FormData();
         if (values.image) {
-          setUploading(true);
-          const formData = new FormData();
           formData.append("image", values.image);
-          formData.append("name", values.name);
-          formData.append("description", values.description);
-          formData.append("repositoryUrl", values.repositoryUrl);
-          formData.append("demoUrl", values.demoUrl || "");
+        }
+        formData.append("name", values.name);
+        formData.append("description", values.description);
+        formData.append("repositoryUrl", values.repositoryUrl);
+        formData.append("demoUrl", values.demoUrl || "");
 
-          const { data } = editingProject
-            ? await axios.put(
-                `/api/user/projects/${editingProject._id}`,
-                formData,
-                {
-                  headers: {
-                    "Content-Type": "multipart/form-data",
-                    Authorization: `Bearer ${token}`,
-                  },
-                }
-              )
-            : await axios.post("/api/user/projects", formData, {
+        const { data } = editingProject
+          ? await axios.put(
+              `/api/user/projects/${editingProject._id}`,
+              formData,
+              {
                 headers: {
                   "Content-Type": "multipart/form-data",
                   Authorization: `Bearer ${token}`,
                 },
-              });
+              }
+            )
+          : await axios.post("/api/user/projects", formData, {
+              headers: {
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${token}`,
+              },
+            });
 
-          imageUrl = data.image; // Lấy URL ảnh từ response
-          setUploading(false);
-        }
+        // ✅ Cập nhật cache local ngay
+        queryClient.setQueryData({ queryKey: ["projects"] }, (old = []) => {
+          return editingProject
+            ? old.map((proj) => (proj._id === data._id ? data : proj))
+            : [...old, data];
+        });
 
-        const projectData = {
-          name: values.name,
-          description: values.description,
-          repositoryUrl: values.repositoryUrl,
-          demoUrl: values.demoUrl,
-          image: imageUrl,
-        };
-
-        if (editingProject) {
-          await onUpdateProject(editingProject._id, projectData);
-        } else {
-          await onAddProject(projectData);
-        }
-
+        // ✅ Reset form
         resetForm();
-        setEditingProject(null);
         setImagePreview("");
         setCurrentImage("");
+        setEditingProject(null);
+
+        // ✅ Refetch lại server
+        queryClient.invalidateQueries({ queryKey: ["projects"] });
       } catch (error) {
         console.error("Error saving project:", error);
+      } finally {
         setUploading(false);
       }
     },
@@ -97,17 +104,39 @@ const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
 
   const handleEditProject = (project) => {
     setEditingProject(project);
-    setCurrentImage(project.image || ""); // Lưu ảnh hiện tại
-    setImagePreview(""); // Reset preview ảnh mới
-    formik.setValues({
-      name: project.name,
-      description: project.description,
-      repositoryUrl: project.repositoryUrl,
-      demoUrl: project.demoUrl || "",
-      image: null,
-    });
+    setCurrentImage(project.image || "");
+    setImagePreview("");
   };
 
+  const handleDeleteProject = async (projectId) => {
+    if (window.confirm("Are you sure you want to delete this project?")) {
+      try {
+        // ✅ Tối ưu UI
+        queryClient.setQueryData({ queryKey: ["projects"] }, (old) =>
+          old ? old.filter((p) => p._id !== projectId) : []
+        );
+
+        // ✅ Gọi API
+        await axios.delete(`/api/user/projects/${projectId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        // ✅ Sync lại server
+        await queryClient.invalidateQueries({ queryKey: ["projects"] });
+
+        // ✅ Nếu đang edit project bị xóa
+        if (editingProject?._id === projectId) {
+          setEditingProject(null);
+          formik.resetForm();
+          setImagePreview("");
+          setCurrentImage("");
+        }
+      } catch (error) {
+        console.error("Error deleting project:", error);
+        queryClient.invalidateQueries({ queryKey: ["projects"] });
+      }
+    }
+  };
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-xl font-semibold mb-6">Projects Settings</h2>
@@ -314,20 +343,31 @@ const ProjectSettings = ({ projects, onAddProject, onUpdateProject }) => {
             {projects.map((project) => (
               <div
                 key={project._id}
-                className="border border-gray-200 rounded-lg p-4 flex justify-between items-center"
+                className="border border-gray-200 rounded-lg p-4 flex justify-between items-center bg-white shadow-sm hover:shadow-md transition"
               >
-                <div>
-                  <h4 className="font-medium">{project.name}</h4>
+                {/* Phần thông tin project bên trái */}
+                <div className="flex-1 mr-6">
+                  <h4 className="font-semibold text-lg">{project.name}</h4>
                   <p className="text-sm text-gray-600 line-clamp-1">
                     {project.description}
                   </p>
                 </div>
-                <button
-                  onClick={() => handleEditProject(project)}
-                  className="text-primary hover:text-primary-dark"
-                >
-                  Edit
-                </button>
+
+                {/* Nhóm nút bên phải */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEditProject(project)}
+                    className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-4 py-1 rounded-md text-sm font-medium transition"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteProject(project._id)}
+                    className="bg-red-100 text-red-600 hover:bg-red-200 px-4 py-1 rounded-md text-sm font-medium transition"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             ))}
           </div>

@@ -15,11 +15,12 @@ const getProjects = asyncHandler(async (req, res) => {
 // @access  Private
 const addProject = asyncHandler(async (req, res) => {
   const { name, description, repositoryUrl, demoUrl } = req.body;
+  console.log(req.file?.path);
 
   let imageUrl = "";
-  if (req.file) {
-    const result = await uploadToCloudinary(req.file.path, "project-images");
-    imageUrl = result.secure_url;
+  if (req.file?.path) {
+    // const result = await uploadToCloudinary(req.file.path, "project-images");
+    imageUrl = req.file?.path;
   }
 
   const project = await Project.create({
@@ -42,6 +43,7 @@ const updateProject = asyncHandler(async (req, res) => {
     _id: req.params.id,
     userId: req.user._id,
   });
+  console.log(req.file?.path);
 
   if (!project) {
     res.status(404);
@@ -53,7 +55,7 @@ const updateProject = asyncHandler(async (req, res) => {
   project.repositoryUrl = req.body.repositoryUrl || project.repositoryUrl;
   project.demoUrl = req.body.demoUrl || project.demoUrl;
 
-  if (req.file) {
+  if (req.file?.path) {
     // const result = await uploadToCloudinary(req.file.path, "project-images");
     project.image = req.file.path;
   }

@@ -76,7 +76,6 @@ const loginUser = asyncHandler(async (req, res) => {
 // @access  Public
 const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
-  console.log(email);
 
   const user = await User.findOne({ email });
   if (!user) {
@@ -105,7 +104,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
 // @route   POST /api/user/reset-password
 // @access  Public
 const resetPassword = asyncHandler(async (req, res) => {
-  console.log(req.body);
   const { token, password } = req.body;
 
   // Verify token

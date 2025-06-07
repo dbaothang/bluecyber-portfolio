@@ -33,11 +33,14 @@ const ProfileSettings = ({ user, onUpdate }) => {
 
         if (values.image) {
           formData.append("image", values.image);
-        } else if (values.image === null && currentImage) {
-          // Nếu người dùng đã xóa ảnh
+        }
+        if (values.removeImage) {
           formData.append("removeImage", "true");
         }
 
+        // for (let [key, value] of formData.entries()) {
+        //   console.log(key, value);
+        // }
         const { data } = await axios.put("/api/user/profile", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -82,6 +85,7 @@ const ProfileSettings = ({ user, onUpdate }) => {
           jobTitle: user.jobTitle || "",
           bio: user.bio || "",
           image: null,
+          removeImage: false,
         },
       });
       setCurrentImage(user.profileImage || "");

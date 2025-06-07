@@ -31,12 +31,12 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   user.jobTitle = req.body.jobTitle;
   user.bio = req.body.bio;
 
-  console.log(req.file);
+  // console.log(req.file);
 
   // Update image if provided
-  if (req.file) {
+  if (req.file?.path) {
     user.profileImage = req.file.path; // Use Cloudinary URL directly
-  } else {
+  } else if (req.body.removeImage === "true") {
     user.profileImage = ""; // Keep the existing image
   }
 
