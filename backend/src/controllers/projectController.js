@@ -64,7 +64,10 @@ const updateProject = asyncHandler(async (req, res) => {
   if (req.file?.path) {
     // const result = await uploadToCloudinary(req.file.path, "project-images");
     project.image = req.file.path;
+  } else {
+    project.image = "";
   }
+  console.log("test");
 
   const updatedProject = await project.save();
   res.json(updatedProject);

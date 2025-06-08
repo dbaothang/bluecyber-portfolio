@@ -9,9 +9,10 @@ router
   .get(protect, projectController.getProjects)
   .post(protect, upload.single("image"), projectController.addProject);
 
+router.route("/projects/:userId").get(projectController.getPublicProjects);
+
 router
-  .route("/projects/:userId")
-  .get(projectController.getPublicProjects)
+  .route("/projects/:id")
   .put(protect, upload.single("image"), projectController.updateProject)
   .delete(protect, projectController.deleteProject);
 

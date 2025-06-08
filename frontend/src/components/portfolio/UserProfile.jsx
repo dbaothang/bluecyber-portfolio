@@ -42,7 +42,7 @@ const UserProfile = ({ user }) => {
       const timer = setTimeout(() => {
         setSuccess(false);
         setShowContactForm(false); // Xoá dòng này nếu bạn muốn giữ form mở
-      }, 5000);
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [success]);

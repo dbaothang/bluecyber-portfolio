@@ -6,7 +6,6 @@ import axios from "axios";
 const ProfileSettings = ({ user, onUpdate }) => {
   const [imagePreview, setImagePreview] = useState(user?.profileImage || "");
   const [uploading, setUploading] = useState(false);
-  const [currentImage, setCurrentImage] = useState(user?.profileImage || ""); // Thêm state để lưu ảnh hiện tại
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No token found");
 
@@ -16,6 +15,7 @@ const ProfileSettings = ({ user, onUpdate }) => {
       jobTitle: user?.jobTitle || "",
       bio: user?.bio || "",
       image: null,
+      removeImage: false, // Thêm trường để đánh dấu xóa ảnh
     },
     validationSchema: Yup.object({
       name: Yup.string().required("Required"),
@@ -31,16 +31,13 @@ const ProfileSettings = ({ user, onUpdate }) => {
         formData.append("jobTitle", values.jobTitle);
         formData.append("bio", values.bio);
 
+        // Chỉ gửi image hoặc removeImage, không gửi cả hai
         if (values.image) {
           formData.append("image", values.image);
-        }
-        if (values.removeImage) {
+        } else if (values.removeImage) {
           formData.append("removeImage", "true");
         }
 
-        // for (let [key, value] of formData.entries()) {
-        //   console.log(key, value);
-        // }
         const { data } = await axios.put("/api/user/profile", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -48,8 +45,8 @@ const ProfileSettings = ({ user, onUpdate }) => {
           },
         });
 
-        await onUpdate(data);
-        setCurrentImage(data.profileImage || ""); // Cập nhật ảnh hiện tại
+        // await onUpdate(data);
+        setImagePreview(data.profileImage || "");
         setUploading(false);
       } catch (error) {
         console.error("Error updating profile:", error);
@@ -62,36 +59,32 @@ const ProfileSettings = ({ user, onUpdate }) => {
     const file = e.target.files[0];
     if (file) {
       formik.setFieldValue("image", file);
+      formik.setFieldValue("removeImage", false); // Đảm bảo không xóa ảnh khi chọn ảnh mới
       setImagePreview(URL.createObjectURL(file));
     }
   };
 
   const handleRemoveImage = () => {
-    formik.setFieldValue("image", null); // Đánh dấu xóa ảnh
-    setImagePreview(""); // Xóa preview
-    setCurrentImage("");
-    if (currentImage) {
-      // Nếu có ảnh hiện tại, chỉ xóa preview nhưng vẫn giữ currentImage
-      // Khi submit sẽ xử lý việc xóa ảnh thật sự
-    }
+    formik.setFieldValue("image", null);
+    formik.setFieldValue("removeImage", true); // Đánh dấu xóa ảnh
+    setImagePreview("");
   };
 
   // Reset form khi user thay đổi
-  useEffect(() => {
-    if (user) {
-      formik.resetForm({
-        values: {
-          name: user.name || "",
-          jobTitle: user.jobTitle || "",
-          bio: user.bio || "",
-          image: null,
-          removeImage: false,
-        },
-      });
-      setCurrentImage(user.profileImage || "");
-      setImagePreview("");
-    }
-  }, [user]);
+  // useEffect(() => {
+  //   if (user ) {
+  //     formik.resetForm({
+  //       values: {
+  //         name: user.name || "",
+  //         jobTitle: user.jobTitle || "",
+  //         bio: user.bio || "",
+  //         image: null,
+  //         removeImage: false,
+  //       },
+  //     });
+  //     setImagePreview(user.profileImage || "");
+  //   }
+  // }, [user]);
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
@@ -103,10 +96,10 @@ const ProfileSettings = ({ user, onUpdate }) => {
             Profile Image
           </label>
           <div className="flex items-center gap-4">
-            {(imagePreview || currentImage) && (
+            {imagePreview && (
               <div className="relative">
                 <img
-                  src={imagePreview || currentImage}
+                  src={imagePreview}
                   alt="Profile"
                   className="w-20 h-20 rounded-full object-cover"
                 />
@@ -120,7 +113,7 @@ const ProfileSettings = ({ user, onUpdate }) => {
               </div>
             )}
 
-            {!(imagePreview || currentImage) && (
+            {!imagePreview && (
               <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
                 <span className="text-gray-500">No image</span>
               </div>
@@ -138,7 +131,7 @@ const ProfileSettings = ({ user, onUpdate }) => {
                 htmlFor="image"
                 className="inline-block px-4 py-2 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200"
               >
-                {imagePreview || currentImage ? "Change Image" : "Upload Image"}
+                {imagePreview ? "Change Image" : "Upload Image"}
               </label>
               <p className="text-xs text-gray-500 mt-1">
                 Image must be PNG or JPEG - max 2MB
@@ -147,7 +140,6 @@ const ProfileSettings = ({ user, onUpdate }) => {
           </div>
         </div>
 
-        {/* Các phần khác giữ nguyên */}
         <div className="mb-4">
           <label
             htmlFor="name"
