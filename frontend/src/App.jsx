@@ -45,24 +45,14 @@ const App = () => {
       <Route path="/" element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="/auth/*" element={<AuthPage />} />
-
         {/* Route public */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-
         {/* Route protected */}
-        <Route
-          path="/portfolio/:userId"
-          element={
-            isAuthenticated ? (
-              <PortfolioPage />
-            ) : (
-              <Navigate to="/login" state={{ from: location }} replace />
-            )
-          }
-        />
+        <Route path="/portfolio/:userId" element={<PortfolioPage />} />{" "}
+        {/* Public route */}
         <Route
           path="/portfolio"
           element={

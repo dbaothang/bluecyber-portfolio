@@ -15,6 +15,21 @@ const getUserProfile = asyncHandler(async (req, res) => {
   }
 });
 
+const getPublicProfile = asyncHandler(async (req, res) => {
+  const userId = req.params.userId;
+
+  // Kiểm tra nếu userId không hợp lệ
+
+  const user = await User.findById(userId).select("-password");
+
+  if (user) {
+    res.json(user);
+  } else {
+    res.status(404);
+    throw new Error("User not found");
+  }
+});
+
 // @desc    Update user profile
 // @route   PUT /api/user/profile
 // @access  Private
@@ -55,4 +70,5 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 module.exports = {
   getUserProfile,
   updateUserProfile,
+  getPublicProfile,
 };

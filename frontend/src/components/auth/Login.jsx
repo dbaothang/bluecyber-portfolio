@@ -12,7 +12,7 @@ const Login = () => {
   const { login, loading, error } = authStore();
 
   // Lấy trang trước đó từ state hoặc mặc định là '/portfolio'
-  const from = location.state?.from?.pathname || "/portfolio";
+  // const from = location.state?.from?.pathname || "/portfolio";
 
   const formik = useFormik({
     initialValues: {
@@ -24,9 +24,12 @@ const Login = () => {
       password: Yup.string().required("Required"),
     }),
     onSubmit: async (values) => {
-      const success = await login(values.email, values.password);
-      if (success) {
-        navigate(from, { replace: true }); // Redirect về trang trước đó
+      const user = await login(values.email, values.password); // Đảm bảo hàm login trả về user
+      console.log(user);
+      if (user) {
+        const redirectPath =
+          location.state?.from?.pathname || `/portfolio/${user}`;
+        navigate(redirectPath, { replace: true });
       }
     },
   });

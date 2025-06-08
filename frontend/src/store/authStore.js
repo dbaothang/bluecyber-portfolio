@@ -17,13 +17,13 @@ const authStore = create((set) => ({
         isAuthenticated: true,
         loading: false,
       });
-      return true;
+      return data._id;
     } catch (error) {
       set({
         error: error.response?.data?.message || error.message,
         loading: false,
       });
-      return false;
+      return null;
     }
   },
 

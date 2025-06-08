@@ -15,25 +15,39 @@ const transporter = nodemailer.createTransport({
 // @route   POST /api/contact
 // @access  Public
 const sendContactEmail = asyncHandler(async (req, res) => {
-  const { email, message, userId } = req.body;
+  const { name, email, message, phone } = req.body;
 
-  // Get user details
-  const user = await User.findById(userId);
-  if (!user) {
-    res.status(404);
-    throw new Error("User not found");
-  }
+  // 1. Lấy thông tin người nhận
+  const targetUser = await User.findById(req.params.userId);
+
+  // 2. Gửi email
+  const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    auth: {
+      user: process.env.EMAIL_USERNAME,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+  });
 
   const mailOptions = {
     from: email,
-    to: user.email,
-    subject: "New contact from your portfolio",
-    text: `You have a new message from ${email}:\n\n${message}`,
+    to: targetUser.email,
+    subject: `New contact from ${name}`,
+    html: `
+      <h3>New contact request</h3>
+      <p>From: ${name}</p>
+      <p>Email: ${email}</p>
+      <p>Phone: ${phone || "Not provided"}</p>
+      <p>Message: ${message}</p>
+    `,
   };
 
-  await transporter.sendMail(mailOptions);
-
-  res.status(200).json({ message: "Email sent successfully" });
+  try {
+    await transporter.sendMail(mailOptions);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to send email" });
+  }
 });
 
 module.exports = {

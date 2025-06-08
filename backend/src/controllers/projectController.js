@@ -10,6 +10,12 @@ const getProjects = asyncHandler(async (req, res) => {
   res.json(projects);
 });
 
+const getPublicProjects = asyncHandler(async (req, res) => {
+  const user_id = req.params.userId;
+  const projects = await Project.find({ userId: user_id });
+  res.json(projects);
+});
+
 // @desc    Add a new project
 // @route   POST /api/user/projects
 // @access  Private
@@ -86,4 +92,5 @@ module.exports = {
   addProject,
   updateProject,
   deleteProject,
+  getPublicProjects,
 };

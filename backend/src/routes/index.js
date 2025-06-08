@@ -8,6 +8,6 @@ const emailController = require("../controllers/emailController");
 router.use("/user", authRoutes);
 router.use("/user", profileRoutes);
 router.use("/user", projectRoutes);
-router.post("/contact", emailController.sendContactEmail);
+router.post("/contact/:userId", emailController.sendContactEmail);
 
 module.exports = router;

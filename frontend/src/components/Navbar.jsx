@@ -22,7 +22,7 @@ const Navbar = () => {
           {isAuthenticated ? (
             <>
               <Link
-                to="/portfolio"
+                to={`/portfolio/${user?._id || user?.id}`} // Sửa ở đây
                 className="flex items-center gap-1 text-gray-700 hover:text-primary"
               >
                 <FiHome />

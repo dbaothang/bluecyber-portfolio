@@ -10,7 +10,8 @@ router
   .post(protect, upload.single("image"), projectController.addProject);
 
 router
-  .route("/projects/:id")
+  .route("/projects/:userId")
+  .get(projectController.getPublicProjects)
   .put(protect, upload.single("image"), projectController.updateProject)
   .delete(protect, projectController.deleteProject);
 

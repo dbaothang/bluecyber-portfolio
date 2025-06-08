@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useParams } from "react-router-dom";
 import UserProfile from "../components/portfolio/UserProfile";
 import ProjectCard from "../components/portfolio/ProjectCard";
 import ContactButton from "../components/portfolio/ContactButton";
@@ -8,20 +9,18 @@ const PortfolioPage = () => {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showContactForm, setShowContactForm] = useState(false);
+  const { userId } = useParams();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) throw new Error("No token found");
+        const response = await axios.get(`/api/user/profile/${userId}`);
+        const projectsResponse = await axios.get(
+          `/api/user/projects/${userId}`
+        );
 
-        const headers = { Authorization: `Bearer ${token}` };
-        const userResponse = await axios.get("/api/user/profile", { headers });
-        const projectsResponse = await axios.get("/api/user/projects", {
-          headers,
-        });
-
-        setUser(userResponse.data);
+        setUser(response.data);
         setProjects(projectsResponse.data);
       } catch (error) {
         console.error("Error fetching portfolio:", error);
@@ -31,7 +30,18 @@ const PortfolioPage = () => {
     };
 
     fetchData();
-  }, []); // ⬅️ Bỏ userId ra khỏi dependency luôn
+  }, [userId]);
+
+  const handleContactSubmit = async (formData) => {
+    try {
+      await axios.post(`/api/contact/${userId}`, formData);
+      alert("Your message has been sent successfully!");
+      setShowContactForm(false);
+    } catch (error) {
+      console.error("Error sending contact:", error);
+      alert("Failed to send message. Please try again later.");
+    }
+  };
 
   if (loading) {
     return <div className="text-center py-12">Loading...</div>;
@@ -47,7 +57,6 @@ const PortfolioPage = () => {
 
       <div className="mb-8">
         <h2 className="text-2xl font-bold mb-6">Projects</h2>
-
         {projects.length === 0 ? (
           <p className="text-gray-500">No projects yet.</p>
         ) : (
@@ -59,10 +68,21 @@ const PortfolioPage = () => {
         )}
       </div>
 
-      <div className="flex justify-center">
-        <ContactButton userId={user._id} />{" "}
-        {/* vẫn có thể dùng nếu cần user._id */}
-      </div>
+      {/* <div className="flex justify-center">
+        <button
+          onClick={() => setShowContactForm(true)}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Contact {user.name}
+        </button>
+      </div> */}
+
+      {showContactForm && (
+        <ContactButton
+          onSubmit={handleContactSubmit}
+          onCancel={() => setShowContactForm(false)}
+        />
+      )}
 
       <div className="mt-12 text-center text-gray-500 text-sm">
         Powered by DevPort

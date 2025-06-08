@@ -5,17 +5,14 @@ import axios from "axios";
 const ContactButton = ({ userId }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
+    name: "",
     email: "",
+    phone: "",
     message: "",
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
-
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const headers = { Authorization: `Bearer ${token}` };
 
   const handleChange = (e) => {
     setFormData({
@@ -30,16 +27,9 @@ const ContactButton = ({ userId }) => {
     setError(null);
 
     try {
-      await axios.post(
-        "/api/contact",
-        {
-          ...formData,
-          userId,
-        },
-        { headers }
-      );
+      await axios.post(`/api/contact/${userId}`, formData);
       setSuccess(true);
-      setFormData({ email: "", message: "" });
+      setFormData({ name: "", email: "", phone: "", message: "" });
     } catch (err) {
       setError(err.response?.data?.message || "Failed to send message");
     } finally {
@@ -91,15 +81,25 @@ const ContactButton = ({ userId }) => {
             ) : (
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Your Name
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                    className="input-field"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Your Email
                   </label>
                   <input
                     type="email"
-                    id="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
@@ -109,14 +109,23 @@ const ContactButton = ({ userId }) => {
                 </div>
 
                 <div className="mb-4">
-                  <label
-                    htmlFor="message"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone Number (Optional)
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="input-field"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Message
                   </label>
                   <textarea
-                    id="message"
                     name="message"
                     rows="4"
                     value={formData.message}
