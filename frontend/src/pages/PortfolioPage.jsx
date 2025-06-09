@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useParams } from "react-router-dom";
 import UserProfile from "../components/portfolio/UserProfile";
 import ProjectCard from "../components/portfolio/ProjectCard";
 import ContactButton from "../components/portfolio/ContactButton";
+import api from "./../api";
 
 const PortfolioPage = () => {
   const [user, setUser] = useState(null);
@@ -15,10 +15,8 @@ const PortfolioPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`/api/user/profile/${userId}`);
-        const projectsResponse = await axios.get(
-          `/api/user/projects/${userId}`
-        );
+        const response = await api.get(`/user/profile/${userId}`);
+        const projectsResponse = await api.get(`/user/projects/${userId}`);
 
         setUser(response.data);
         setProjects(projectsResponse.data);
@@ -34,7 +32,7 @@ const PortfolioPage = () => {
 
   const handleContactSubmit = async (formData) => {
     try {
-      await axios.post(`/api/contact/${userId}`, formData);
+      await api.post(`/contact/${userId}`, formData);
       alert("Your message has been sent successfully!");
       setShowContactForm(false);
     } catch (error) {

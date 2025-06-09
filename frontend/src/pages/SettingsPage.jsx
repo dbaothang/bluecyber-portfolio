@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import ProfileSettings from "../components/settings/ProfileSettings";
 import ProjectSettings from "../components/settings/ProjectSettings";
+import api from "./../api";
 
 const SettingsPage = () => {
   const [user, setUser] = useState(null);
@@ -16,8 +16,8 @@ const SettingsPage = () => {
     const fetchData = async () => {
       try {
         console.log(headers);
-        const userResponse = await axios.get("/api/user/profile", { headers });
-        const projectsResponse = await axios.get("/api/user/projects", {
+        const userResponse = await api.get("/user/profile", { headers });
+        const projectsResponse = await api.get("/user/projects", {
           headers,
         });
 
@@ -37,7 +37,7 @@ const SettingsPage = () => {
     try {
       // Không cần gọi lại API ở đây vì đã gọi trong ProfileSettings
       // Chỉ cần cập nhật state với dữ liệu trả về từ API
-      const { data } = await axios.put("/api/user/profile", formData, {
+      const { data } = await api.put("/user/profile", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
@@ -52,7 +52,7 @@ const SettingsPage = () => {
 
   const handleAddProject = async (projectData) => {
     try {
-      const { data } = await axios.post("/api/user/projects", projectData, {
+      const { data } = await api.post("/user/projects", projectData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
@@ -66,8 +66,8 @@ const SettingsPage = () => {
 
   const handleUpdateProject = async (projectId, projectData) => {
     try {
-      const { data } = await axios.put(
-        `/api/user/projects/${projectId}`,
+      const { data } = await api.put(
+        `/user/projects/${projectId}`,
         projectData,
         {
           headers: {

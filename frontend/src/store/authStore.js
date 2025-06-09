@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import axios from "axios";
+import api from "./../api"; // dùng file axios riêng
 
 const authStore = create((set) => ({
   user: null,
@@ -10,7 +10,7 @@ const authStore = create((set) => ({
   login: async (email, password) => {
     set({ loading: true, error: null });
     try {
-      const { data } = await axios.post("/api/user/login", { email, password });
+      const { data } = await api.post("/user/login", { email, password });
       localStorage.setItem("token", data.token);
       set({
         user: data.user,
@@ -30,12 +30,7 @@ const authStore = create((set) => ({
   register: async (name, email, password) => {
     set({ loading: true, error: null });
     try {
-      const { data } = await axios.post("/api/user/signup", {
-        name,
-        email,
-        password,
-      });
-      // localStorage.setItem("userInfo", JSON.stringify(data));
+      await api.post("/user/signup", { name, email, password });
       set({ loading: false });
     } catch (error) {
       set({
@@ -53,7 +48,7 @@ const authStore = create((set) => ({
   forgotPassword: async (email) => {
     set({ loading: true, error: null });
     try {
-      await axios.post("/api/user/forgot-password", { email });
+      await api.post("/user/forgot-password", { email });
       set({ loading: false });
     } catch (error) {
       set({
@@ -66,8 +61,7 @@ const authStore = create((set) => ({
   resetPassword: async (token, password) => {
     set({ loading: true, error: null });
     try {
-      console.log(token, password);
-      await axios.post("/api/user/reset-password", { token, password });
+      await api.post("/user/reset-password", { token, password });
       set({ loading: false });
     } catch (error) {
       set({
@@ -86,7 +80,7 @@ const authStore = create((set) => ({
     }
 
     try {
-      const { data } = await axios.get("/api/user/profile", {
+      const { data } = await api.get("/user/profile", {
         headers: { Authorization: `Bearer ${token}` },
       });
       set({

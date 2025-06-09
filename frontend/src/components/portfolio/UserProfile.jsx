@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useParams } from "react-router-dom";
 import { FiMail } from "react-icons/fi";
+import api from "./../../api";
 
 const UserProfile = ({ user }) => {
   const { userId } = useParams();
@@ -21,7 +21,7 @@ const UserProfile = ({ user }) => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const { data } = await axios.get(`/api/user/profile/${userId}`);
+        const { data } = await api.get(`/user/profile/${userId}`);
         setPortfolioUser(data);
       } catch (error) {
         console.error("Error fetching user:", error);
@@ -56,7 +56,7 @@ const UserProfile = ({ user }) => {
     setSending(true);
     setError(null);
     try {
-      await axios.post(`/api/contact/${portfolioUser._id}`, formData);
+      await api.post(`/contact/${portfolioUser._id}`, formData);
       setSuccess(true);
       setFormData({ name: "", email: "", phone: "", message: "" });
     } catch (err) {

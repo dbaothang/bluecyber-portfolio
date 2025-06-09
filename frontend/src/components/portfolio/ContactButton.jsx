@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FiMail, FiX } from "react-icons/fi";
-import axios from "axios";
+import api from "./../../api";
 
 const ContactButton = ({ userId }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,7 +27,7 @@ const ContactButton = ({ userId }) => {
     setError(null);
 
     try {
-      await axios.post(`/api/contact/${userId}`, formData);
+      await api.post(`/contact/${userId}`, formData);
       setSuccess(true);
       setFormData({ name: "", email: "", phone: "", message: "" });
     } catch (err) {

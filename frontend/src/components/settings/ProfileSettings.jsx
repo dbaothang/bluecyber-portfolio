@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import axios from "axios";
+import api from "./../../api";
 
 const ProfileSettings = ({ user, onUpdate }) => {
   const [imagePreview, setImagePreview] = useState(user?.profileImage || "");
@@ -38,7 +38,7 @@ const ProfileSettings = ({ user, onUpdate }) => {
           formData.append("removeImage", "true");
         }
 
-        const { data } = await axios.put("/api/user/profile", formData, {
+        const { data } = await api.put("/user/profile", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${token}`,

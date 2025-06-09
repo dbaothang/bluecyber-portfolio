@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
 import UserProfile from "../components/portfolio/UserProfile";
 import ProjectCard from "../components/portfolio/ProjectCard";
 import ContactButton from "../components/portfolio/ContactButton";
+import api from "./../../api";
 
 const Portfolio = () => {
   const { userId } = useParams();
@@ -14,10 +14,8 @@ const Portfolio = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const userResponse = await axios.get(`/api/user/profile/${userId}`);
-        const projectsResponse = await axios.get(
-          `/api/user/projects/${userId}`
-        );
+        const userResponse = await api.get(`/user/profile/${userId}`);
+        const projectsResponse = await api.get(`/user/projects/${userId}`);
 
         setUser(userResponse.data);
         setProjects(projectsResponse.data);

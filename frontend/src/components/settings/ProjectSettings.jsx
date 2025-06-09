@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import axios from "axios";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import api from "./../../api";
 
 const ProjectSettings = ({ onAddProject, onUpdateProject }) => {
   const queryClient = useQueryClient();
@@ -17,7 +17,7 @@ const ProjectSettings = ({ onAddProject, onUpdateProject }) => {
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
-      const { data } = await axios.get("/api/user/projects", {
+      const { data } = await api.get("/user/projects", {
         headers: { Authorization: `Bearer ${token}` },
       });
       return data;
@@ -54,17 +54,13 @@ const ProjectSettings = ({ onAddProject, onUpdateProject }) => {
         formData.append("demoUrl", values.demoUrl || "");
 
         const { data } = editingProject
-          ? await axios.put(
-              `/api/user/projects/${editingProject._id}`,
-              formData,
-              {
-                headers: {
-                  "Content-Type": "multipart/form-data",
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            )
-          : await axios.post("/api/user/projects", formData, {
+          ? await api.put(`/user/projects/${editingProject._id}`, formData, {
+              headers: {
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${token}`,
+              },
+            })
+          : await api.post("/user/projects", formData, {
               headers: {
                 "Content-Type": "multipart/form-data",
                 Authorization: `Bearer ${token}`,
@@ -117,7 +113,7 @@ const ProjectSettings = ({ onAddProject, onUpdateProject }) => {
         );
 
         // ✅ Gọi API
-        await axios.delete(`/api/user/projects/${projectId}`, {
+        await api.delete(`/user/projects/${projectId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
