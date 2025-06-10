@@ -45,9 +45,20 @@ const ProjectSettings = ({ onAddProject, onUpdateProject }) => {
       try {
         setUploading(true);
         const formData = new FormData();
-        if (values.image) {
+
+        // Nếu có ảnh mới (File object) thì gửi ảnh mới
+        if (values.image instanceof File) {
           formData.append("image", values.image);
         }
+        // Nếu đang chỉnh sửa project và project đó có ảnh (currentImage)
+        else if (editingProject?.image) {
+          // Fetch ảnh cũ từ URL và chuyển thành Blob để gửi lên
+          const imageBlob = await fetch(editingProject.image).then((res) =>
+            res.blob()
+          );
+          formData.append("image", imageBlob, "current-image.jpg"); // Có thể đặt tên tùy ý
+        }
+
         formData.append("name", values.name);
         formData.append("description", values.description);
         formData.append("repositoryUrl", values.repositoryUrl);
@@ -67,21 +78,12 @@ const ProjectSettings = ({ onAddProject, onUpdateProject }) => {
               },
             });
 
-        // ✅ Cập nhật cache local ngay
-        queryClient.setQueryData({ queryKey: ["projects"] }, (old = []) => {
-          return editingProject
-            ? old.map((proj) => (proj._id === data._id ? data : proj))
-            : [...old, data];
-        });
-
-        // ✅ Reset form
+        // Reset form và cập nhật state
         resetForm();
         setImagePreview("");
         setCurrentImage("");
         setEditingProject(null);
-
-        // ✅ Refetch lại server
-        queryClient.invalidateQueries({ queryKey: ["projects"] });
+        await queryClient.invalidateQueries(["projects"]);
       } catch (error) {
         console.error("Error saving project:", error);
       } finally {

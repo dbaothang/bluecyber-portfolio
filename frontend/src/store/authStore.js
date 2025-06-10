@@ -12,6 +12,7 @@ const authStore = create((set) => ({
     try {
       const { data } = await api.post("/user/login", { email, password });
       localStorage.setItem("token", data.token);
+      localStorage.setItem("userId", data._id);
       set({
         user: data.user,
         isAuthenticated: true,
@@ -42,6 +43,7 @@ const authStore = create((set) => ({
 
   logout: () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("userId");
     set({ user: null, isAuthenticated: false });
   },
 

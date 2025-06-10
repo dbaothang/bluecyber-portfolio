@@ -5,6 +5,7 @@ import authStore from "../store/authStore";
 const Navbar = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = authStore();
+  const userId = localStorage.getItem("userId");
 
   const handleLogout = () => {
     logout();
@@ -22,7 +23,7 @@ const Navbar = () => {
           {isAuthenticated ? (
             <>
               <Link
-                to={`/portfolio/${user?._id || user?.id}`} // Sửa ở đây
+                to={`/portfolio/${userId}`} // Sửa ở đây
                 className="flex items-center gap-1 text-gray-700 hover:text-primary"
               >
                 <FiHome />
