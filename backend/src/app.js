@@ -10,7 +10,7 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: ["http://45.77.172.27:5174"], // Chỉ cho phép frontend accessAdd commentMore actions
+    origin: ["http://66.42.56.232:5174"], // Chỉ cho phép frontend accessAdd commentMore actions
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],

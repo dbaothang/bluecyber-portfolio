@@ -58,10 +58,10 @@ const loginUser = asyncHandler(async (req, res) => {
   if (user && (await user.correctPassword(password, user.password))) {
     res.json({
       _id: user._id,
-      name: user.name,
-      email: user.email,
-      jobTitle: user.jobTitle,
-      bio: user.bio,
+      // name: user.name,
+      // email: user.email,
+      // jobTitle: user.jobTitle,
+      // bio: user.bio,
       profileImage: user.profileImage,
       token: generateToken(user._id),
     });
